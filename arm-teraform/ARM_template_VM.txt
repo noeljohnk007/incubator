@@ -1,0 +1,123 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "virtualMachines_demo_vm_name": {
+            "defaultValue": "demo-vm",
+            "type": "String"
+        },
+        "publicIPAddresses_instance1_public_ip_name": {
+            "defaultValue": "instance1-public-ip",
+            "type": "String"
+        },
+        "disks_myosdisk1_externalid": {
+            "defaultValue": "/subscriptions/388090bb-6dfd-4755-a477-c65e14825017/resourceGroups/first-steps-demo/providers/Microsoft.Compute/disks/myosdisk1",
+            "type": "String"
+        },
+        "networkInterfaces_demo_instance1_externalid": {
+            "defaultValue": "/subscriptions/388090bb-6dfd-4755-a477-c65e14825017/resourceGroups/first-steps-demo/providers/Microsoft.Network/networkInterfaces/demo-instance1",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-11-01",
+            "name": "[parameters('virtualMachines_demo_vm_name')]",
+            "location": "westeurope",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_A1_v2"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "16.04-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "myosdisk1",
+                        "createOption": "FromImage",
+                        "caching": "ReadWrite",
+                        "writeAcceleratorEnabled": false,
+                        "managedDisk": {
+                            "storageAccountType": "Standard_LRS",
+                            "id": "[parameters('disks_myosdisk1_externalid')]"
+                        },
+                        "deleteOption": "Detach",
+                        "diskSizeGB": 30
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "demo-instance",
+                    "adminUsername": "demo",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "/home/demo/.ssh/authorized_keys",
+                                    "keyData": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC46AxpACsmBC7xmlNWuzxFuW4KID++yh1lqoKtfYH71A8I0Rz69O1lnvSxiQNz6SOD3yd7njfoTB0Y1++ALE4YCdBfF5PuQdrAY+EdhWG4xrQuCo1w/xJU3jVxG5Gsr+BTzD0g1lhQfffe6+cYQRsezTY4EA4U2E/7zAYUo9RgxNHZJXe1QTJc1iv1IhsoLaI6TpnA/r8b9YBzKK9j53kM3s7JjK3UErV0AcO43gYqGE/8ebuxxJtbcmrpHoQv5sD9JZDMARD8G3EuTdXSersN5DOtwgZ2mX+oJX16lb7XByaCKA18wERXL5FHYh9ogYFP39Nw+xFeDtRzaHXSENB6fi70clNGSmsbOM7k8o1kFeZRRmJ0YQvOs0/BCKjLUACObZFSZK2iqwva1qnBhX6BtE7qJXH6fVClKrtK0Tl1CMEViiKVUtyKttrgWbbaRZQpKjBnFhKRbbEPSn8/e1xKx1/0jm8qZT0On5EB2h2W/roRcqY2JzGTFFikap/iBxUNMlZ8gOmLp4LKd7c3TWxPiMFORnAa1pESlVP+Crc/dAcj/NqltOwmDREhVRCz/6B0lfKFV+4kEiK7Kl47Fl2mkHZBRx8fA4gIiObnzb77nkwIk+a9RvChnz+DFMBYXcch+OYEcLV+uEU2YUbr3WXRemLt+8IgjcJhpL36keWkuw== global\\syed.quadri@BLR-LAP-112\r\n"
+                                }
+                            ]
+                        },
+                        "provisionVMAgent": true,
+                        "patchSettings": {
+                            "patchMode": "ImageDefault",
+                            "assessmentMode": "ImageDefault"
+                        }
+                    },
+                    "secrets": [],
+                    "allowExtensionOperations": true,
+                    "requireGuestProvisionSignal": true
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[parameters('networkInterfaces_demo_instance1_externalid')]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-11-01",
+            "name": "[parameters('publicIPAddresses_instance1_public_ip_name')]",
+            "location": "westeurope",
+            "sku": {
+                "name": "Basic",
+                "tier": "Regional"
+            },
+            "properties": {
+                "ipAddress": "20.229.45.101",
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2021-11-01",
+            "name": "[concat(parameters('virtualMachines_demo_vm_name'), '/AzureNetworkWatcherExtension')]",
+            "location": "westeurope",
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_demo_vm_name'))]"
+            ],
+            "properties": {
+                "autoUpgradeMinorVersion": true,
+                "publisher": "Microsoft.Azure.NetworkWatcher",
+                "type": "NetworkWatcherAgentLinux",
+                "typeHandlerVersion": "1.4"
+            }
+        }
+    ]
+}
