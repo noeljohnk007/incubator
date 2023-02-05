@@ -1,0 +1,7 @@
+[
+  {
+    "topic_name": "keycloak_logs",
+    "topic_partitions": 4,
+    "topic_replicationFactor": 1
+  }
+]
